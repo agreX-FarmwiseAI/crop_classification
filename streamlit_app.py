@@ -286,16 +286,52 @@ def main():
         .st-emotion-cache-1y4p8pa {
             padding: 0;
         }
+        .top-right-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        /* Description Card */
+        .description-card {
+            background-color: rgba(240, 248, 255, 0.9); /* Aliceblue with slight transparency */
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 1.5em;
+            margin-bottom: 1.5em;
+            border-left: 8px solid #6495ED; /* Cornflowerblue border */
+            font-style: italic;
+            text-align: center;
+        }
+
 
         </style>
         """,
         unsafe_allow_html=True,
     )
     colored_header(
-    label="Crop Field Analyzer",
-    description="Upload an image to analyze and identify the crops, their growth stages, and confidence scores.",
-    color_name="green-70",
+        label="Crop Field Analyzer",
+        description="Upload an image to analyze and identify the crops, their growth stages, and confidence scores.",
+        color_name="green-70",
     )
+    # --- Top Right Reset Button ---
+    st.markdown(
+        """
+        <style>
+        .top-right-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    if st.button("Reset", type="primary", key='reset_btn', help="Clear all inputs and results."):
+        st.session_state.clear()
+        st.session_state.uploaded_file = None  # Clear uploaded_file
+        st.rerun()
 
 
     if "uploaded_file" not in st.session_state:
@@ -329,48 +365,48 @@ def main():
         analyze_button = st.button(
             "Analyze Image"
         )  # Analyze button (no key needed here)
-        if st.button("Reset", type="primary"):
-            st.session_state.clear()
-            st.session_state.uploaded_file = None  # Clear uploaded_file
-            st.experimental_rerun()  # Use st.rerun()
+
         st.markdown("</div>", unsafe_allow_html=True)
 
 
-    if st.session_state.uploaded_file is not None:  # Conditionally process and display results
+    if st.session_state.uploaded_file is not None:
         image_data = st.session_state.uploaded_file.getvalue()
 
-        if analyze_button:  # Use the button variable
+        if analyze_button:
             with st.spinner("Analyzing..."):
                 crops, scores, stages, description = process_image(image_data, prompt_text)
                 time.sleep(1)  # Keep for visual feedback.  Consider removing in production.
 
-            st.subheader("Results:")
+
             if crops:
-                for i, crop in enumerate(crops):
-                    with st.container():
-                        st.markdown(f"<div class='result-card'>", unsafe_allow_html=True)
-                        st.markdown(
-                            f"<h3 class='result-title'>Crop {i+1}</h3>",
-                            unsafe_allow_html=True,
-                        )
-                        st.write(f"**Crop:** {crop}")
-                        st.write(
-                            f"**Score:** {scores[i] if i < len(scores) else 'N/A'}"
-                        )
-                        st.write(
-                            f"**Stage:** {stages[i] if i < len(stages) else 'N/A'}"
-                        )
-                        st.markdown("</div>", unsafe_allow_html=True)
+                st.subheader("Results:")
+                # Horizontal layout for crop results
+                cols = st.columns(len(crops))  # Create columns dynamically
+                for i, col in enumerate(cols):
+                    with col:
+                        with st.container():
+                            st.markdown(f"<div class='result-card'>", unsafe_allow_html=True)
+                            st.markdown(
+                                f"<h3 class='result-title'>Crop {i+1}</h3>",
+                                unsafe_allow_html=True,
+                            )
+                            st.write(f"**Crop:** {crops[i]}")
+                            st.write(
+                                f"**Score:** {scores[i] if i < len(scores) else 'N/A'}"
+                            )
+                            st.write(
+                                f"**Stage:** {stages[i] if i < len(stages) else 'N/A'}"
+                            )
+                            st.markdown("</div>", unsafe_allow_html=True)
+
+                # Enhanced Description Card
                 with st.container():
-                    st.markdown(f"<div class='result-card'>", unsafe_allow_html=True)
-                    st.markdown(
-                        f"<h3 class='result-title'>Description</h3>", unsafe_allow_html=True
-                    )
-                    st.write(f"**Description:** {description}")
+                    st.markdown(f"<div class='description-card'>", unsafe_allow_html=True)
+                    st.markdown(f"### Detailed Analysis", unsafe_allow_html=True)
+                    st.write(description)
                     st.markdown("</div>", unsafe_allow_html=True)
             else:
                 st.error("Could not identify the crop or an error occurred.")
-
 
 if __name__ == "__main__":
     main()
